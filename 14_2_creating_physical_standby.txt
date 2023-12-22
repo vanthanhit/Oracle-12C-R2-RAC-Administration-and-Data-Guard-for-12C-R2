@@ -175,23 +175,31 @@ SQL> create pfile='/tmp/initorcl.ora' from spfile;
 --Copy files orapw file and initorcl.ora to server standby
 $ scp /tmp/initorcl.ora standby:/tmp/
 
-$ scp /u01/app/oracle/product/12.2.0.1/db_1/dbs/orapworcl standby:/u01/app/oracle/product/12.2.0.1/db_1/dbs/
+$ scp /u01/app/oracle/product/19.0.0/dbhome_1/dbs/orapworcl standby:/u01/app/oracle/product/19.0.0/dbhome_1/dbs
 
 
 --standby server
+
+--check path datafile on primary ----
+SELECT c.name DB_NAME, b.name DATA_FILE_NAME
+-- a.con_id, a.ts#, a.name TABLESPACE_NAME, b.name DATA_FILE_NAME, b.file#, b.blocks, b.bytes/1024/1024 SIZE_MB, b.status, b.enabled, b.creation_time
+FROM v$tablespace a, v$datafile b, v$containers c
+WHERE a.con_id = b.con_id AND a.con_id = c.con_id AND a.ts# = b.ts#
+ORDER BY a.con_id, a.TS#;
+
+--- create dir on stanby---
 $ mkdir -p /u01/app/oracle/admin/orcl
 
 $ mkdir -p /u01/app/oracle/admin/orcl/adump
 
 $ mkdir -p /u01/app/oracle/fast_recovery_area
-
-$ mkdir -p /u01/app/oracle/fast_recovery_area/orcl
-
-$ mkdir -p /u01/app/oracle/oradata/orcl
-
-$ mkdir -p /u01/app/oracle/oradata/orcl/pdbseed
-
-$ mkdir -p /u01/app/oracle/oradata/orcl/pdb1
+  
+$ mkdir -p /u01/app/oracle/fast_recovery_area/ORCL
+  mkdir -p /u01/app/oracle/fast_recovery_area/ORCL/controlfile/
+$ mkdir -p /u01/app/oracle/oradata/ORCL
+  mkdir -p /u01/app/oracle/oradata/ORCL/controlfile/
+  
+$ mkdir -p /u01/app/oracle/oradata/ORCL/0D0476237B563237E06380DEA8C0D09D/
 
 
 --Modify the parameter in the created /tmp/initorcl.ora file
@@ -203,7 +211,7 @@ $ vi /tmp/initorcl.ora
 *.log_archive_dest_1='LOCATION=USE_DB_RECOVERY_FILE_DEST VALID_FOR=(ALL_LOGFILES,ALL_ROLES) DB_UNIQUE_NAME=orclstb'
 
 --Create an entry in the /etc/oratab:
-orcl:/u01/app/oracle/product/12.2.0.1/db_1:N
+orcl:/u01/app/oracle/product/19.0.0/dbhome_1:N
 
 
 --Network configuration
@@ -218,12 +226,12 @@ SID_LIST_LISTENER =
  (SID_LIST =
   (SID_DESC =
    (GLOBAL_DBNAME = orclstb)
-   (ORACLE_HOME = /u01/app/oracle/product/12.2.0.1/db_1)
+   (ORACLE_HOME = /u01/app/oracle/product/19.0.0/dbhome_1)
    (SID_NAME = orcl)
   )
   (SID_DESC =
    (GLOBAL_DBNAME = orclstb_dgmgrl)
-   (ORACLE_HOME = /u01/app/oracle/product/12.2.0.1/db_1)
+   (ORACLE_HOME = /u01/app/oracle/product/19.0.0/dbhome_1)
    (SID_NAME = orcl)
   )
 )
